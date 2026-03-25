@@ -57,15 +57,34 @@
           </svg>
           位置（可选）
         </label>
-        <div class="relative">
-          <div class="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <div class="flex gap-2">
+          <div class="relative flex-1">
+            <div class="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+              </svg>
+            </div>
+            <input v-model="location" type="text" placeholder="添加位置..." class="input pl-12" />
+          </div>
+          <button
+            @click="getLocation"
+            :disabled="geoLoading"
+            class="px-4 py-2.5 rounded-xl bg-primary-100 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400 hover:bg-primary-200 dark:hover:bg-primary-900/50 transition-colors flex items-center gap-2 disabled:opacity-50"
+            title="获取当前位置"
+          >
+            <svg v-if="geoLoading" class="w-5 h-5 animate-spin" fill="none" viewBox="0 0 24 24">
+              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+            <svg v-else class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
             </svg>
-          </div>
-          <input v-model="location" type="text" placeholder="添加位置..." class="input pl-12" />
+            <span class="hidden sm:inline">定位</span>
+          </button>
         </div>
+        <p v-if="geoError" class="mt-2 text-sm text-red-500">{{ geoError }}</p>
       </div>
 
       <!-- Content -->
@@ -118,6 +137,20 @@ const content = ref('')
 const tags = ref<string[]>([])
 const tagInput = ref('')
 const saving = ref(false)
+
+// Geolocation
+const { location: geoLocation, loading: geoLoading, error: geoError, getCurrentPosition } = useGeolocation()
+
+async function getLocation() {
+  try {
+    await getCurrentPosition()
+    if (geoLocation.value) {
+      location.value = geoLocation.value
+    }
+  } catch {
+    // Error handled by composable
+  }
+}
 
 const pageTitle = computed(() => {
   const today = getToday()

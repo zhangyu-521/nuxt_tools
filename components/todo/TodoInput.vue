@@ -45,9 +45,4 @@ function submit() {
     content.value = ''
   }
 }
-
-// Auto focus on mount
-onMounted(() => {
-  inputRef.value?.focus()
-})
 </script>
