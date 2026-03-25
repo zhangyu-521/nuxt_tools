@@ -20,20 +20,20 @@ export interface StorageAdapter {
 
   // Export/Import
   exportAll(): Promise<ExportData>
-  importAll(data: ExportData): Promise<void>
+  importAll(diaries: Diary[], todos: Todo[]): Promise<void>
 }
 
 // IndexedDB implementation
 class IndexedDBStorage implements StorageAdapter {
   async getDiary(id: string): Promise<Diary | null> {
     const db = await getDB()
-    return await db.get('diaries', id)
+    return (await db.get('diaries', id)) ?? null
   }
 
   async getDiaryByDate(date: string): Promise<Diary | null> {
     const db = await getDB()
     const index = db.transaction('diaries').store.index('by-date')
-    return await index.get(date)
+    return (await index.get(date)) ?? null
   }
 
   async getDiaries(options?: QueryOptions): Promise<Diary[]> {
@@ -94,7 +94,7 @@ class IndexedDBStorage implements StorageAdapter {
 
   async getTodo(id: string): Promise<Todo | null> {
     const db = await getDB()
-    return await db.get('todos', id)
+    return (await db.get('todos', id)) ?? null
   }
 
   async getTodos(date?: string): Promise<Todo[]> {
