@@ -1,0 +1,190 @@
+<template>
+  <div class="max-w-3xl mx-auto">
+    <!-- Header -->
+    <div class="flex items-center justify-between mb-6">
+      <div class="flex items-center gap-3">
+        <NuxtLink to="/diary" class="p-2.5 rounded-xl hover:bg-gray-100 dark:hover:bg-slate-700 text-gray-500 transition-all hover:scale-105">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+          </svg>
+        </NuxtLink>
+        <h1 class="text-xl font-bold text-gray-900 dark:text-gray-100">{{ pageTitle }}</h1>
+      </div>
+      <div class="flex items-center gap-2">
+        <NuxtLink to="/" class="p-2.5 rounded-xl hover:bg-gray-100 dark:hover:bg-slate-700 text-gray-500 transition-all hover:scale-105" title="返回首页">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+          </svg>
+        </NuxtLink>
+        <button v-if="diaryId" @click="confirmDelete" class="p-2.5 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-xl transition-all hover:scale-105">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+          </svg>
+        </button>
+        <button @click="save" :disabled="saving" class="btn-primary">
+          {{ saving ? '保存中...' : '保存' }}
+        </button>
+      </div>
+    </div>
+
+    <!-- Editor -->
+    <div class="card space-y-6 p-6">
+      <!-- Date Display -->
+      <div class="flex items-center gap-2 text-gray-500 text-sm">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+        </svg>
+        {{ formatDateDisplay(date) }}
+      </div>
+
+      <!-- Mood -->
+      <div class="p-5 bg-gray-50 dark:bg-slate-700/30 rounded-2xl">
+        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-4 flex items-center gap-2">
+          <svg class="w-4 h-4 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.828 14.828a4 4 0 01-5.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          今日心情
+        </label>
+        <DiaryMoodSelector v-model="mood" />
+      </div>
+
+      <!-- Location -->
+      <div>
+        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 flex items-center gap-2">
+          <svg class="w-4 h-4 text-primary-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+          </svg>
+          位置（可选）
+        </label>
+        <div class="relative">
+          <div class="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+            </svg>
+          </div>
+          <input v-model="location" type="text" placeholder="添加位置..." class="input pl-12" />
+        </div>
+      </div>
+
+      <!-- Content -->
+      <div>
+        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 flex items-center gap-2">
+          <svg class="w-4 h-4 text-primary-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+          </svg>
+          日记内容
+        </label>
+        <textarea v-model="content" rows="12" placeholder="记录今天的心情..." class="input resize-none" />
+      </div>
+
+      <!-- Tags -->
+      <div>
+        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 flex items-center gap-2">
+          <svg class="w-4 h-4 text-primary-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
+          </svg>
+          标签
+        </label>
+        <div class="flex flex-wrap items-center gap-2 p-3 bg-gray-50 dark:bg-slate-700/30 rounded-xl">
+          <span v-for="tag in tags" :key="tag" class="tag flex items-center gap-1">
+            #{{ tag }}
+            <button @click="removeTag(tag)" class="hover:text-primary-800 dark:hover:text-primary-300 transition-colors">
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </span>
+          <input v-model="tagInput" type="text" placeholder="添加标签，按回车确认" class="flex-1 bg-transparent border-0 focus:ring-0 text-sm dark:text-gray-100 min-w-[120px]" @keyup.enter="addTag" />
+        </div>
+      </div>
+    </div>
+  </div>
+</template>
+
+<script setup lang="ts">
+import { useDiaryStore } from '~/stores/diary'
+
+const route = useRoute()
+const router = useRouter()
+const diaryStore = useDiaryStore()
+
+const date = route.params.date as string
+const diaryId = ref('')
+const mood = ref(3)
+const location = ref('')
+const content = ref('')
+const tags = ref<string[]>([])
+const tagInput = ref('')
+const saving = ref(false)
+
+const pageTitle = computed(() => {
+  const today = getToday()
+  if (date === today) return '今日日记'
+  return '写日记'
+})
+
+function formatDateDisplay(dateStr: string): string {
+  const [year, month, day] = dateStr.split('-').map(Number)
+  const d = new Date(year, month - 1, day)
+  const weekdays = ['周日', '周一', '周二', '周三', '周四', '周五', '周六']
+  return `${year}年${month}月${day}日 ${weekdays[d.getDay()]}`
+}
+
+function addTag() {
+  const trimmed = tagInput.value.trim()
+  if (trimmed && !tags.value.includes(trimmed)) {
+    tags.value.push(trimmed)
+    tagInput.value = ''
+  }
+}
+
+function removeTag(tag: string) {
+  const index = tags.value.indexOf(tag)
+  if (index > -1) {
+    tags.value.splice(index, 1)
+  }
+}
+
+async function save() {
+  saving.value = true
+  try {
+    await diaryStore.saveDiary({
+      id: diaryId.value || undefined,
+      date: String(date),
+      mood: Number(mood.value),
+      location: location.value ? String(location.value) : undefined,
+      content: String(content.value),
+      tags: [...tags.value.map(String)],
+    })
+    router.push('/diary')
+  } catch (e) {
+    console.log(e)
+    alert('保存失败，请重试')
+  } finally {
+    saving.value = false
+  }
+}
+
+async function confirmDelete() {
+  if (!confirm('确定要删除这篇日记吗？')) return
+  try {
+    await diaryStore.deleteDiary(diaryId.value)
+    router.push('/diary')
+  } catch (e) {
+    alert('删除失败')
+  }
+}
+
+onMounted(async () => {
+  const existing = await diaryStore.getDiaryByDate(date)
+  if (existing) {
+    diaryId.value = existing.id
+    mood.value = existing.mood
+    location.value = existing.location || ''
+    content.value = existing.content
+    tags.value = [...existing.tags]
+  }
+})
+</script>

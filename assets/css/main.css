@@ -1,0 +1,134 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-gradient-to-br from-gray-50 to-gray-100 text-gray-900 dark:from-slate-900 dark:to-slate-800 dark:text-gray-100;
+    font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+  }
+}
+
+@layer components {
+  /* 精美卡片 */
+  .card {
+    @apply bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm rounded-2xl shadow-sm border border-gray-200/50 dark:border-slate-700/50 transition-all duration-300;
+  }
+
+  .card:hover {
+    @apply shadow-lg border-gray-300/50 dark:border-slate-600/50;
+  }
+
+  /* 按钮样式 */
+  .btn {
+    @apply inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl font-medium transition-all duration-200 transform active:scale-95;
+  }
+
+  .btn-primary {
+    @apply btn bg-gradient-to-r from-primary-500 to-primary-600 text-white shadow-lg shadow-primary-500/25 hover:shadow-primary-500/40 hover:from-primary-600 hover:to-primary-700;
+  }
+
+  .btn-secondary {
+    @apply btn bg-gray-100 dark:bg-slate-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-slate-600;
+  }
+
+  .btn-ghost {
+    @apply btn text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-slate-700;
+  }
+
+  /* 输入框样式 */
+  .input {
+    @apply w-full px-4 py-3 bg-gray-50 dark:bg-slate-700/50 border border-gray-200 dark:border-slate-600 rounded-xl transition-all duration-200 focus:ring-2 focus:ring-primary-500/50 focus:border-primary-500 dark:text-gray-100 outline-none;
+  }
+
+  .input:hover {
+    @apply border-gray-300 dark:border-slate-500;
+  }
+
+  /* 精美标签 */
+  .tag {
+    @apply inline-flex items-center gap-1 px-3 py-1.5 text-sm rounded-full bg-primary-50 dark:bg-primary-900/30 text-primary-700 dark:text-primary-400 transition-all duration-200;
+  }
+
+  .tag:hover {
+    @apply bg-primary-100 dark:bg-primary-900/50;
+  }
+
+  /* 统计卡片 */
+  .stat-card {
+    @apply card p-5 text-center relative overflow-hidden;
+  }
+
+  .stat-card::after {
+    content: '';
+    @apply absolute inset-0 bg-gradient-to-br from-primary-500/5 to-transparent opacity-0 transition-opacity duration-300;
+  }
+
+  .stat-card:hover::after {
+    @apply opacity-100;
+  }
+
+  /* 心情选择器 */
+  .mood-btn {
+    @apply relative transition-all duration-300 transform;
+  }
+
+  .mood-btn:hover {
+    @apply scale-110;
+  }
+
+  .mood-btn.active {
+    @apply scale-110;
+  }
+
+  /* 玻璃态效果 */
+  .glass {
+    @apply bg-white/70 dark:bg-slate-800/70 backdrop-blur-lg border border-white/20 dark:border-slate-700/50;
+  }
+
+  /* 渐变文字 */
+  .gradient-text {
+    @apply bg-gradient-to-r from-primary-500 to-cyan-500 bg-clip-text text-transparent;
+  }
+
+  /* 自定义滚动条 */
+  ::-webkit-scrollbar {
+    @apply w-2 h-2;
+  }
+
+  ::-webkit-scrollbar-track {
+    @apply bg-transparent;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    @apply bg-gray-300 dark:bg-slate-600 rounded-full;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    @apply bg-gray-400 dark:bg-slate-500;
+  }
+}
+
+/* 页面过渡动画 */
+.page-enter-active,
+.page-leave-active {
+  transition: all 0.3s ease;
+}
+
+.page-enter-from,
+.page-leave-to {
+  opacity: 0;
+  transform: translateY(10px);
+}
+
+/* 列表动画 */
+.list-enter-active,
+.list-leave-active {
+  transition: all 0.3s ease;
+}
+
+.list-enter-from,
+.list-leave-to {
+  opacity: 0;
+  transform: translateX(-20px);
+}
