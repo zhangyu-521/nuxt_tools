@@ -15,6 +15,7 @@ export default defineNuxtConfig({
   },
   ssr: false,
   app: {
+    baseURL: '/nuxt_tools/',
     head: {
       title: '我的日记',
       meta: [
@@ -23,5 +24,8 @@ export default defineNuxtConfig({
         { name: 'description', content: '个人日记应用 - 记录生活点滴' },
       ],
     },
+  },
+  nitro: {
+    preset: 'github_pages',
   },
 })
