@@ -10,12 +10,27 @@
         </div>
         <h1 class="text-2xl font-bold gradient-text">数据统计</h1>
       </div>
-      <button @click="exportData" class="btn-primary">
-        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-        </svg>
-        导出数据
-      </button>
+      <div class="flex items-center gap-2">
+        <input
+          ref="fileInput"
+          type="file"
+          accept=".json"
+          class="hidden"
+          @change="handleFileImport"
+        />
+        <button @click="triggerImport" class="btn-secondary">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+          </svg>
+          导入数据
+        </button>
+        <button @click="exportData" class="btn-primary">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+          </svg>
+          导出数据
+        </button>
+      </div>
     </div>
 
     <!-- Month Selector -->
@@ -105,14 +120,16 @@ import { useDiaryStore } from '~/stores/diary'
 import { useTodoStore } from '~/stores/todo'
 import { getCurrentMonth } from '~/utils/date'
 import * as echarts from 'echarts'
-import { exportToJSON, downloadJSON } from '~/utils/export'
+import { exportToJSON, downloadJSON, parseImportJSON, readFileAsText } from '~/utils/export'
 
 const diaryStore = useDiaryStore()
 const todoStore = useTodoStore()
+const storage = useStorage()
 
 const currentMonth = ref(getCurrentMonth())
 const moodChartRef = ref<HTMLElement>()
 const todoChartRef = ref<HTMLElement>()
+const fileInput = ref<HTMLInputElement>()
 
 const displayMonth = computed(() => {
   const [year, month] = currentMonth.value.split('-').map(Number)
@@ -232,9 +249,49 @@ function initTodoChart() {
 }
 
 async function exportData() {
-  const data = await useStorage().exportAll()
+  const data = await storage.exportAll()
   const json = exportToJSON(data.diaries, data.todos)
   downloadJSON(json, `diary-backup-${getCurrentMonth()}.json`)
+}
+
+function triggerImport() {
+  fileInput.value?.click()
+}
+
+async function handleFileImport(event: Event) {
+  const target = event.target as HTMLInputElement
+  const file = target.files?.[0]
+  if (!file) return
+
+  try {
+    const json = await readFileAsText(file)
+    const data = parseImportJSON(json)
+
+    if (!confirm(`确定要导入数据吗？\n这将导入 ${data.diaries.length} 篇日记和 ${data.todos.length} 个待办事项。\n现有数据不会被删除，相同日期的日记会被覆盖。`)) {
+      target.value = ''
+      return
+    }
+
+    await storage.importAll(data.diaries, data.todos)
+
+    // 刷新数据
+    await Promise.all([
+      diaryStore.fetchDiaries(),
+      todoStore.fetchTodos(),
+    ])
+
+    // 刷新图表
+    nextTick(() => {
+      initMoodChart()
+      initTodoChart()
+    })
+
+    alert('数据导入成功！')
+  } catch (e: any) {
+    alert('导入失败：' + e.message)
+  } finally {
+    target.value = ''
+  }
 }
 
 onMounted(async () => {

@@ -152,21 +152,16 @@ class IndexedDBStorage implements StorageAdapter {
     }
   }
 
-  async importAll(data: ExportData): Promise<void> {
+  async importAll(diaries: Diary[], todos: Todo[]): Promise<void> {
     const db = await getDB()
-
     const tx = db.transaction(['diaries', 'todos'], 'readwrite')
 
-    // Clear existing data
-    await tx.objectStore('diaries').clear()
-    await tx.objectStore('todos').clear()
-
-    // Import new data
-    for (const diary of data.diaries) {
+    // 导入数据，相同ID的会被覆盖，新的会被添加
+    for (const diary of diaries) {
       await tx.objectStore('diaries').put(diary)
     }
 
-    for (const todo of data.todos) {
+    for (const todo of todos) {
       await tx.objectStore('todos').put(todo)
     }
 

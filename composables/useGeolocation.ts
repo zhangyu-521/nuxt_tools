@@ -101,35 +101,29 @@ export function useGeolocation() {
 
       const data = await response.json()
 
-      // Extract location name from address
+      // Extract location name from address - 省市区格式
       const address = data.address
       if (address) {
-        // Try to build a meaningful location string
+        // 按省市区格式构建位置字符串
         const parts: string[] = []
 
-        if (address.name && address.name !== address.road) {
-          parts.push(address.name)
-        }
-
-        if (address.road) {
-          parts.push(address.road)
-        }
-
-        if (address.suburb || address.neighbourhood) {
-          parts.push(address.suburb || address.neighbourhood)
-        }
-
-        if (address.city || address.town || address.district) {
-          parts.push(address.city || address.town || address.district)
-        }
-
+        // 省
         if (address.province || address.state) {
           parts.push(address.province || address.state)
         }
 
+        // 市
+        if (address.city || address.town) {
+          parts.push(address.city || address.town)
+        }
+
+        // 区/县
+        if (address.district || address.county || address.suburb) {
+          parts.push(address.district || address.county || address.suburb)
+        }
+
         if (parts.length > 0) {
-          // Return first 2-3 parts for brevity
-          return parts.slice(0, 3).join(', ')
+          return parts.join('')
         }
       }
 

@@ -219,5 +219,17 @@ onMounted(async () => {
     content.value = existing.content
     tags.value = [...existing.tags]
   }
+
+  // 如果没有位置信息，自动获取
+  if (!location.value) {
+    try {
+      await getCurrentPosition()
+      if (geoLocation.value) {
+        location.value = geoLocation.value
+      }
+    } catch {
+      // 自动获取失败不显示错误，用户可手动点击获取
+    }
+  }
 })
 </script>

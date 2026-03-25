@@ -1,10 +1,10 @@
 <template>
   <Teleport to="body">
-    <!-- Debug: Manual Install Button (always visible) -->
+    <!-- Debug: Manual Install Button (always visible) - 移到右上角避免遮挡 -->
     <button
       v-if="!showPrompt && !isInstalled"
       @click="showManualInstall = true"
-      class="fixed bottom-4 right-4 z-40 p-3 rounded-full bg-primary-500 text-white shadow-lg hover:bg-primary-600 transition-all"
+      class="fixed top-20 right-4 z-40 p-2.5 rounded-full bg-primary-500/90 backdrop-blur text-white shadow-lg hover:bg-primary-600 transition-all sm:top-24"
       title="安装应用"
     >
       <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
