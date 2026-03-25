@@ -1,5 +1,8 @@
 <template>
   <div class="min-h-screen bg-gray-50 dark:bg-slate-900">
+    <!-- PWA Install Prompt -->
+    <PwaInstallPrompt />
+
     <!-- Header -->
     <CommonAppHeader />
 
