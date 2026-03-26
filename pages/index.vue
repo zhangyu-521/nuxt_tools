@@ -74,7 +74,59 @@
       </div>
 
       <div v-else class="space-y-2">
-        <TodoItem v-for="todo in todayTodos" :key="todo.id" :todo="todo" @toggle="todoStore.toggleTodo" @delete="todoStore.deleteTodo" />
+        <div v-for="todo in todayTodos" :key="todo.id" class="flex items-center gap-3 p-4 bg-white dark:bg-slate-700/30 rounded-xl border border-gray-100 dark:border-slate-700/50 hover:shadow-md transition-all duration-200">
+          <button
+            @click="todoStore.toggleTodo(todo.id)"
+            class="w-6 h-6 rounded-lg border-2 flex items-center justify-center transition-all duration-200"
+            :class="todo.completed
+              ? 'bg-gradient-to-br from-emerald-400 to-emerald-500 border-emerald-500 shadow-md shadow-emerald-500/20'
+              : 'border-gray-300 dark:border-gray-500 hover:border-primary-400'"
+          >
+            <svg v-if="todo.completed" class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7" />
+            </svg>
+          </button>
+
+          <div class="flex-1 min-w-0">
+            <div :class="todo.completed ? 'line-through text-gray-400' : 'text-gray-700 dark:text-gray-200'">
+              {{ todo.content }}
+            </div>
+          </div>
+
+          <button v-if="!todo.completed" @click="confirmPostpone(todo.id)" class="px-3 py-1 text-xs bg-amber-100 dark:bg-amber-900/30 text-amber-600 rounded-lg transition-all hover:bg-amber-200 dark:hover:bg-amber-900/50">
+            延期
+          </button>
+
+          <button @click="confirmDelete(todo.id)" class="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-all">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+            </svg>
+          </button>
+        </div>
+      </div>
+
+      <!-- Confirm Modal -->
+      <div v-if="showConfirmModal" class="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50" @click.self="cancelConfirm">
+        <div class="card p-6 w-full max-w-sm mx-4">
+          <div class="flex items-center gap-3 mb-4">
+            <div class="w-10 h-10 rounded-xl flex items-center justify-center" :class="confirmType === 'delete' ? 'bg-red-100 dark:bg-red-900/30' : 'bg-amber-100 dark:bg-amber-900/30'">
+              <svg class="w-5 h-5" :class="confirmType === 'delete' ? 'text-red-600' : 'text-amber-600'" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path v-if="confirmType === 'postpone'" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                <path v-else stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+              </svg>
+            </div>
+            <h3 class="font-semibold text-gray-900 dark:text-gray-100">{{ confirmTitle }}</h3>
+          </div>
+          <p class="text-sm text-gray-500 mb-6">{{ confirmMessage }}</p>
+          <div class="flex gap-3">
+            <button @click="cancelConfirm" class="flex-1 px-4 py-2.5 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-slate-700 rounded-xl transition-colors">
+              取消
+            </button>
+            <button @click="executeConfirm" :class="confirmType === 'delete' ? 'btn-danger' : 'btn-primary'" class="flex-1 px-4 py-2.5 rounded-xl font-medium">
+              确认
+            </button>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -156,8 +208,52 @@ async function saveMood(mood: number) {
 const todayTodos = computed(() => todoStore.getTodosByDate(today))
 const completedCount = computed(() => todayTodos.value.filter(t => t.completed).length)
 
+// Confirm Modal State
+const showConfirmModal = ref(false)
+const confirmType = ref<'postpone' | 'delete'>('postpone')
+const confirmTitle = ref('')
+const confirmMessage = ref('')
+const confirmTodoId = ref<string | null>(null)
+
 async function addTodo(content: string) {
   await todoStore.addTodo(content, today)
+}
+
+function confirmPostpone(id: string) {
+  confirmType.value = 'postpone'
+  confirmTitle.value = '确认延期'
+  confirmMessage.value = '确定要将此待办延期到明天吗？'
+  confirmTodoId.value = id
+  showConfirmModal.value = true
+}
+
+function confirmDelete(id: string) {
+  confirmType.value = 'delete'
+  confirmTitle.value = '确认删除'
+  confirmMessage.value = '确定要删除此待办吗？删除后无法恢复。'
+  confirmTodoId.value = id
+  showConfirmModal.value = true
+}
+
+function cancelConfirm() {
+  showConfirmModal.value = false
+  confirmTodoId.value = null
+}
+
+async function executeConfirm() {
+  if (!confirmTodoId.value) return
+
+  try {
+    if (confirmType.value === 'postpone') {
+      await todoStore.postponeTodo(confirmTodoId.value, 1)
+    } else if (confirmType.value === 'delete') {
+      await todoStore.deleteTodo(confirmTodoId.value)
+    }
+  } catch (e) {
+    console.error(e)
+  } finally {
+    cancelConfirm()
+  }
 }
 
 const diaryCount = computed(() => diaryStore.diaries.length)
