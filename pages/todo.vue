@@ -103,11 +103,11 @@
           </div>
         </div>
 
-        <button v-if="!todo.completed" @click="postponeTodo(todo.id)" class="opacity-0 group-hover:opacity-100 px-3 py-1 text-xs bg-amber-100 dark:bg-amber-900/30 text-amber-600 rounded-lg transition-all hover:bg-amber-200 dark:hover:bg-amber-900/50">
+        <button v-if="!todo.completed" @click="confirmPostponeSingle(todo.id)" class="opacity-0 group-hover:opacity-100 px-3 py-1 text-xs bg-amber-100 dark:bg-amber-900/30 text-amber-600 rounded-lg transition-all hover:bg-amber-200 dark:hover:bg-amber-900/50">
           延期
         </button>
 
-        <button @click="todoStore.deleteTodo(todo.id)" class="opacity-0 group-hover:opacity-100 p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-all">
+        <button @click="confirmDeleteSingle(todo.id)" class="opacity-0 group-hover:opacity-100 p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-all">
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
           </svg>
@@ -131,6 +131,30 @@
         </div>
       </div>
     </div>
+
+    <!-- Confirm Modal (Single Operation) -->
+    <div v-if="showConfirmModal" class="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50" @click.self="cancelConfirm">
+      <div class="card p-6 w-full max-w-sm mx-4">
+        <div class="flex items-center gap-3 mb-4">
+          <div class="w-10 h-10 rounded-xl bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center" :class="confirmType === 'delete' ? 'bg-red-100 dark:bg-red-900/30' : ''">
+            <svg class="w-5 h-5" :class="confirmType === 'delete' ? 'text-red-600' : 'text-amber-600'" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path v-if="confirmType === 'postpone'" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+              <path v-else stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+            </svg>
+          </div>
+          <h3 class="font-semibold text-gray-900 dark:text-gray-100">{{ confirmTitle }}</h3>
+        </div>
+        <p class="text-sm text-gray-500 mb-6">{{ confirmMessage }}</p>
+        <div class="flex gap-3">
+          <button @click="cancelConfirm" class="flex-1 px-4 py-2.5 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-slate-700 rounded-xl transition-colors">
+            取消
+          </button>
+          <button @click="executeConfirm" :class="confirmType === 'delete' ? 'btn-danger' : 'btn-primary'" class="flex-1 px-4 py-2.5 rounded-xl font-medium">
+            确认
+          </button>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -144,6 +168,13 @@ const today = getToday()
 const selectedDate = ref(today)
 const showPostponeModal = ref(false)
 const postponeTargetDate = ref(getToday())
+
+// Confirm Modal State
+const showConfirmModal = ref(false)
+const confirmType = ref<'postpone' | 'delete'>('postpone')
+const confirmTitle = ref('')
+const confirmMessage = ref('')
+const confirmTodoId = ref<string | null>(null)
 
 const filteredTodos = computed(() => {
   if (!selectedDate.value) {
@@ -171,6 +202,44 @@ async function addTodo(content: string) {
 
 async function postponeTodo(id: string) {
   await todoStore.postponeTodo(id, 1)
+}
+
+// Single operation confirmations
+function confirmPostponeSingle(id: string) {
+  confirmType.value = 'postpone'
+  confirmTitle.value = '确认延期'
+  confirmMessage.value = '确定要将此待办延期到明天吗？'
+  confirmTodoId.value = id
+  showConfirmModal.value = true
+}
+
+function confirmDeleteSingle(id: string) {
+  confirmType.value = 'delete'
+  confirmTitle.value = '确认删除'
+  confirmMessage.value = '确定要删除此待办吗？删除后无法恢复。'
+  confirmTodoId.value = id
+  showConfirmModal.value = true
+}
+
+function cancelConfirm() {
+  showConfirmModal.value = false
+  confirmTodoId.value = null
+}
+
+async function executeConfirm() {
+  if (!confirmTodoId.value) return
+
+  try {
+    if (confirmType.value === 'postpone') {
+      await postponeTodo(confirmTodoId.value)
+    } else if (confirmType.value === 'delete') {
+      await todoStore.deleteTodo(confirmTodoId.value)
+    }
+  } catch (e) {
+    console.error(e)
+  } finally {
+    cancelConfirm()
+  }
 }
 
 async function confirmPostpone() {
