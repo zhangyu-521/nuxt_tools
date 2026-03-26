@@ -250,7 +250,7 @@ function initTodoChart() {
 
 async function exportData() {
   const data = await storage.exportAll()
-  const json = exportToJSON(data.diaries, data.todos)
+  const json = exportToJSON(data.diaries, data.todos, data.images)
   downloadJSON(json, `diary-backup-${getCurrentMonth()}.json`)
 }
 
@@ -267,12 +267,13 @@ async function handleFileImport(event: Event) {
     const json = await readFileAsText(file)
     const data = parseImportJSON(json)
 
-    if (!confirm(`确定要导入数据吗？\n这将导入 ${data.diaries.length} 篇日记和 ${data.todos.length} 个待办事项。\n现有数据不会被删除，相同日期的日记会被覆盖。`)) {
+    const imageCount = data.images?.length || 0
+    if (!confirm(`确定要导入数据吗？\n这将导入 ${data.diaries.length} 篇日记、${data.todos.length} 个待办事项${imageCount > 0 ? `和 ${imageCount} 张图片` : ''}。\n现有数据不会被删除，相同日期的日记会被覆盖。`)) {
       target.value = ''
       return
     }
 
-    await storage.importAll(data.diaries, data.todos)
+    await storage.importAll(data)
 
     // 刷新数据
     await Promise.all([

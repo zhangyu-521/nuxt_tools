@@ -3,7 +3,7 @@
     <!-- Header -->
     <div class="flex items-center justify-between mb-6">
       <div class="flex items-center gap-2 sm:gap-3 min-w-0">
-        <NuxtLink to="/diary" class="p-2 sm:p-2.5 rounded-xl hover:bg-gray-100 dark:hover:bg-slate-700 text-gray-500 transition-all hover:scale-105 flex-shrink-0">
+        <NuxtLink :to="backLink" class="p-2 sm:p-2.5 rounded-xl hover:bg-gray-100 dark:hover:bg-slate-700 text-gray-500 transition-all hover:scale-105 flex-shrink-0">
           <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
           </svg>
@@ -11,11 +11,6 @@
         <h1 class="text-lg sm:text-xl font-bold text-gray-900 dark:text-gray-100 truncate">{{ pageTitle }}</h1>
       </div>
       <div class="flex items-center gap-1 sm:gap-2 flex-shrink-0">
-        <NuxtLink to="/" class="p-2 sm:p-2.5 rounded-xl hover:bg-gray-100 dark:hover:bg-slate-700 text-gray-500 transition-all hover:scale-105" title="返回首页">
-          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
-          </svg>
-        </NuxtLink>
         <button v-if="diaryId" @click="confirmDelete" class="p-2 sm:p-2.5 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-xl transition-all hover:scale-105">
           <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
@@ -98,6 +93,31 @@
         <textarea v-model="content" rows="12" placeholder="记录今天的心情..." class="input resize-none" />
       </div>
 
+      <!-- Images Upload -->
+      <div>
+        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 flex items-center gap-2">
+          <svg class="w-4 h-4 text-primary-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+          </svg>
+          图片
+        </label>
+        <!-- Image Gallery (if has images) -->
+        <DiaryImageGallery
+          v-if="images.length > 0"
+          :images="images"
+          class="mb-3"
+          @delete="handleDeleteImage"
+          @delete-all="handleDeleteAllImages"
+        />
+
+        <!-- Image Uploader -->
+        <DiaryImageUploader
+          :diary-id="diaryId || tempDiaryId || 'temp-' + date"
+          @upload="handleImagesUploaded"
+          @error="handleImageError"
+        />
+      </div>
+
       <!-- Tags -->
       <div>
         <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 flex items-center gap-2">
@@ -124,12 +144,23 @@
 
 <script setup lang="ts">
 import { useDiaryStore } from '~/stores/diary'
+import type { DiaryImage } from '~/types'
 
 const route = useRoute()
 const router = useRouter()
 const diaryStore = useDiaryStore()
+const storage = useStorage()
 
 const date = route.params.date as string
+const from = route.query.from as string | undefined
+
+// 根据来源决定返回链接
+const backLink = computed(() => {
+  if (from === 'calendar') {
+    return '/calendar'
+  }
+  return '/diary'
+})
 const diaryId = ref('')
 const mood = ref(3)
 const location = ref('')
@@ -137,6 +168,10 @@ const content = ref('')
 const tags = ref<string[]>([])
 const tagInput = ref('')
 const saving = ref(false)
+
+// Images
+const images = ref<DiaryImage[]>([])
+const tempDiaryId = ref('')
 
 // Geolocation
 const { location: geoLocation, loading: geoLoading, error: geoError, getCurrentPosition } = useGeolocation()
@@ -180,20 +215,64 @@ function removeTag(tag: string) {
   }
 }
 
+// Image handlers
+function handleImagesUploaded(newImages: DiaryImage[]) {
+  images.value.push(...newImages)
+}
+
+function handleImageError(message: string) {
+  alert(message)
+}
+
+async function handleDeleteImage(imageId: string) {
+  try {
+    await storage.deleteImage(imageId)
+    images.value = images.value.filter(img => img.id !== imageId)
+  } catch (e) {
+    alert('删除图片失败')
+  }
+}
+
+async function handleDeleteAllImages() {
+  try {
+    for (const image of images.value) {
+      await storage.deleteImage(image.id)
+    }
+    images.value = []
+  } catch (e) {
+    alert('删除图片失败')
+  }
+}
+
 async function save() {
   saving.value = true
   try {
-    await diaryStore.saveDiary({
+    // 先保存日记获取日记ID
+    const savedDiary = await diaryStore.saveDiary({
       id: diaryId.value || undefined,
       date: String(date),
       mood: Number(mood.value),
       location: location.value ? String(location.value) : undefined,
       content: String(content.value),
       tags: [...tags.value.map(String)],
+      images: images.value.map(img => img.id),
     })
-    router.push('/diary')
+
+    // 使用保存后的日记ID更新图片关联
+    const currentDiaryId = savedDiary.id
+
+    // 保存所有图片到 IndexedDB（确保图片被持久化）
+    for (const image of images.value) {
+      if (image.diaryId !== currentDiaryId) {
+        image.diaryId = currentDiaryId
+      }
+      await storage.saveImage(image)
+    }
+
+    // 根据来源决定跳转目标
+    router.push(from === 'calendar' ? '/calendar' : '/diary')
   } catch (e) {
-    console.log(e)
+    console.error('Save error:', e)
     alert('保存失败，请重试')
   } finally {
     saving.value = false
@@ -203,21 +282,46 @@ async function save() {
 async function confirmDelete() {
   if (!confirm('确定要删除这篇日记吗？')) return
   try {
+    // 删除关联的图片
+    if (diaryId.value) {
+      await storage.deleteImagesByDiary(diaryId.value)
+    }
     await diaryStore.deleteDiary(diaryId.value)
-    router.push('/diary')
+    // 根据来源决定跳转目标
+    router.push(from === 'calendar' ? '/calendar' : '/diary')
   } catch (e) {
     alert('删除失败')
   }
 }
 
 onMounted(async () => {
-  const existing = await diaryStore.getDiaryByDate(date)
+  // 先从 store 的 getter 尝试获取（可能已经有缓存）
+  let existing = diaryStore.getDiaryByDate(date)
+
+  // 如果 store 中没有，从 IndexedDB 获取
+  if (!existing) {
+    await diaryStore.fetchDiaryByDate(date)
+    existing = diaryStore.currentDiary
+  }
+
   if (existing) {
     diaryId.value = existing.id
     mood.value = existing.mood
     location.value = existing.location || ''
     content.value = existing.content
     tags.value = [...existing.tags]
+
+    // 加载关联的图片
+    if (existing.images && existing.images.length > 0) {
+      const loadedImages: DiaryImage[] = []
+      for (const imageId of existing.images) {
+        const image = await storage.getImage(imageId)
+        if (image) {
+          loadedImages.push(image)
+        }
+      }
+      images.value = loadedImages
+    }
   }
 
   // 如果没有位置信息，自动获取

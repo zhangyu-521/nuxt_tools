@@ -1,12 +1,18 @@
-import type { ExportData, Diary, Todo } from '~/types'
+import type { ExportData, Diary, Todo, DiaryImage } from '~/types'
 
-export function exportToJSON(diaries: Diary[], todos: Todo[]): string {
+export function exportToJSON(diaries: Diary[], todos: Todo[], images?: DiaryImage[]): string {
   const data: ExportData = {
-    version: '1.0.0',
+    version: '2.0.0',
     exportDate: new Date().toISOString(),
     diaries,
     todos,
   }
+
+  // 如果有图片数据，添加到导出
+  if (images && images.length > 0) {
+    data.images = images
+  }
+
   return JSON.stringify(data, null, 2)
 }
 

@@ -3,19 +3,12 @@
     <!-- Header -->
     <div class="flex items-center justify-between">
       <h1 class="text-2xl font-bold gradient-text">日记</h1>
-      <div class="flex items-center gap-2">
-        <NuxtLink to="/" class="p-2.5 rounded-xl hover:bg-gray-100 dark:hover:bg-slate-700 text-gray-500 transition-all hover:scale-105" title="返回首页">
-          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
-          </svg>
-        </NuxtLink>
-        <NuxtLink :to="`/diary/${today}`" class="btn-primary">
-          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-          </svg>
-          写日记
-        </NuxtLink>
-      </div>
+      <NuxtLink :to="`/diary/${today}`" class="btn-primary">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+        </svg>
+        写日记
+      </NuxtLink>
     </div>
 
     <!-- Tags Filter -->
@@ -97,6 +90,7 @@
       </NuxtLink>
     </div>
   </div>
+  
 </template>
 
 <script setup lang="ts">

@@ -42,7 +42,10 @@ const todoStore = useTodoStore()
 const router = useRouter()
 
 function onDaySelect(date: string) {
-  router.push(`/diary/${date}`)
+  router.push({
+    path: `/diary/${date}`,
+    query: { from: 'calendar' }
+  })
 }
 
 onMounted(() => {

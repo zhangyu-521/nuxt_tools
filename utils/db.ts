@@ -1,5 +1,5 @@
 import { openDB, type DBSchema, type IDBPDatabase } from 'idb'
-import type { Diary, Todo } from '~/types'
+import type { Diary, DiaryImage, Todo } from '~/types'
 
 interface DiaryDB extends DBSchema {
   diaries: {
@@ -19,10 +19,17 @@ interface DiaryDB extends DBSchema {
       'by-tags': string
     }
   }
+  images: {
+    key: string
+    value: DiaryImage
+    indexes: {
+      'by-diary': string
+    }
+  }
 }
 
 const DB_NAME = 'DiaryApp'
-const DB_VERSION = 1
+const DB_VERSION = 2
 
 let db: IDBPDatabase<DiaryDB> | null = null
 
@@ -30,7 +37,7 @@ export async function initDB(): Promise<IDBPDatabase<DiaryDB>> {
   if (db) return db
 
   db = await openDB<DiaryDB>(DB_NAME, DB_VERSION, {
-    upgrade(database) {
+    upgrade(database, oldVersion) {
       // Diaries store
       if (!database.objectStoreNames.contains('diaries')) {
         const diaryStore = database.createObjectStore('diaries', { keyPath: 'id' })
@@ -44,6 +51,12 @@ export async function initDB(): Promise<IDBPDatabase<DiaryDB>> {
         todoStore.createIndex('by-date', 'date', { unique: false })
         todoStore.createIndex('by-completed', 'completed', { unique: false })
         todoStore.createIndex('by-tags', 'tags', { unique: false, multiEntry: true })
+      }
+
+      // Images store (v2)
+      if (!database.objectStoreNames.contains('images')) {
+        const imageStore = database.createObjectStore('images', { keyPath: 'id' })
+        imageStore.createIndex('by-diary', 'diaryId', { unique: false })
       }
     },
   })

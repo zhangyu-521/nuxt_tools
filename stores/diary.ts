@@ -67,6 +67,7 @@ export const useDiaryStore = defineStore('diary', () => {
         mood: data.mood || 3,
         location: data.location,
         tags: data.tags ? [...data.tags] : [],
+        images: data.images ? [...data.images] : [],
         createdAt: data.createdAt || now,
         updatedAt: now,
       }

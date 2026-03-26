@@ -1,4 +1,4 @@
-import type { Diary, Todo, QueryOptions, ExportData } from '~/types'
+import type { Diary, DiaryImage, Todo, QueryOptions, ExportData } from '~/types'
 import { getDB } from '~/utils/db'
 
 export interface StorageAdapter {
@@ -18,9 +18,16 @@ export interface StorageAdapter {
   updateTodo(id: string, updates: Partial<Todo>): Promise<void>
   deleteTodo(id: string): Promise<void>
 
+  // Images
+  getImage(id: string): Promise<DiaryImage | null>
+  getImagesByDiary(diaryId: string): Promise<DiaryImage[]>
+  saveImage(image: DiaryImage): Promise<void>
+  deleteImage(id: string): Promise<void>
+  deleteImagesByDiary(diaryId: string): Promise<void>
+
   // Export/Import
   exportAll(): Promise<ExportData>
-  importAll(diaries: Diary[], todos: Todo[]): Promise<void>
+  importAll(data: ExportData): Promise<void>
 }
 
 // IndexedDB implementation
@@ -138,31 +145,92 @@ class IndexedDBStorage implements StorageAdapter {
     await db.delete('todos', id)
   }
 
+  // Images
+  async getImage(id: string): Promise<DiaryImage | null> {
+    const db = await getDB()
+    return (await db.get('images', id)) ?? null
+  }
+
+  async getImagesByDiary(diaryId: string): Promise<DiaryImage[]> {
+    const db = await getDB()
+    const index = db.transaction('images').store.index('by-diary')
+    return await index.getAll(diaryId)
+  }
+
+  async saveImage(image: DiaryImage): Promise<void> {
+    const db = await getDB()
+    const plainImage = JSON.parse(JSON.stringify(image))
+    await db.put('images', plainImage)
+  }
+
+  async deleteImage(id: string): Promise<void> {
+    const db = await getDB()
+    await db.delete('images', id)
+  }
+
+  async deleteImagesByDiary(diaryId: string): Promise<void> {
+    const db = await getDB()
+    const images = await this.getImagesByDiary(diaryId)
+    const tx = db.transaction('images', 'readwrite')
+    for (const image of images) {
+      await tx.store.delete(image.id)
+    }
+    await tx.done
+  }
+
   async exportAll(): Promise<ExportData> {
     const [diaries, todos] = await Promise.all([
       this.getDiaries(),
       this.getTodos()
     ])
 
+    // 收集所有日记相关的图片
+    const imageIds = new Set<string>()
+    for (const diary of diaries) {
+      if (diary.images) {
+        for (const imageId of diary.images) {
+          imageIds.add(imageId)
+        }
+      }
+    }
+
+    // 获取所有图片数据
+    const images: DiaryImage[] = []
+    for (const imageId of imageIds) {
+      const image = await this.getImage(imageId)
+      if (image) {
+        images.push(image)
+      }
+    }
+
     return {
-      version: '1.0.0',
+      version: '2.0.0',
       exportDate: new Date().toISOString(),
       diaries,
       todos,
+      images,
     }
   }
 
-  async importAll(diaries: Diary[], todos: Todo[]): Promise<void> {
+  async importAll(data: ExportData): Promise<void> {
     const db = await getDB()
-    const tx = db.transaction(['diaries', 'todos'], 'readwrite')
+    const tx = db.transaction(['diaries', 'todos', 'images'], 'readwrite')
 
-    // 导入数据，相同ID的会被覆盖，新的会被添加
-    for (const diary of diaries) {
+    // 导入日记
+    for (const diary of data.diaries) {
       await tx.objectStore('diaries').put(diary)
     }
 
-    for (const todo of todos) {
+    // 导入待办
+    for (const todo of data.todos) {
       await tx.objectStore('todos').put(todo)
+    }
+
+    // 导入图片（如果存在）
+    if (data.images) {
+      for (const image of data.images) {
+        await tx.objectStore('images').put(image)
+      }
     }
 
     await tx.done
