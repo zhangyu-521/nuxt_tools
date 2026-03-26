@@ -1,5 +1,5 @@
 <template>
-  <div class="max-w-3xl mx-auto">
+  <div class="max-w-3xl mx-auto w-full px-4 sm:px-0">
     <!-- Header -->
     <div class="flex items-center justify-between mb-6">
       <div class="flex items-center gap-3">
@@ -115,7 +115,7 @@
               </svg>
             </button>
           </span>
-          <input v-model="tagInput" type="text" placeholder="添加标签，按回车确认" class="flex-1 bg-transparent border-0 focus:ring-0 text-sm dark:text-gray-100 min-w-[120px]" @keyup.enter="addTag" />
+          <input v-model="tagInput" type="text" placeholder="添加标签，按回车确认" class="flex-1 bg-transparent border-0 focus:ring-0 text-sm dark:text-gray-100 min-w-[80px]" @keyup.enter="addTag" />
         </div>
       </div>
     </div>
