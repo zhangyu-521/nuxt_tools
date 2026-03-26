@@ -179,7 +179,7 @@
 <script setup lang="ts">
 import { useDiaryStore } from '~/stores/diary'
 import { useTodoStore } from '~/stores/todo'
-import { getToday, getCurrentMonth, formatDate } from '~/utils/date'
+import { getToday, getCurrentMonth, formatDate, addDays } from '~/utils/date'
 
 const diaryStore = useDiaryStore()
 const todoStore = useTodoStore()
@@ -270,7 +270,41 @@ const avgMood = computed(() => {
   const avg = diaries.reduce((sum, d) => sum + d.mood, 0) / diaries.length
   return avg.toFixed(1)
 })
-const streakDays = 5
+// 计算连续记录天数
+const streakDays = computed(() => {
+  const diaryDates = [...new Set(diaryStore.diaries.map(d => d.date))].sort().reverse()
+  if (diaryDates.length === 0) return 0
+
+  const today = getToday()
+  const yesterday = addDays(today, -1)
+
+  // 检查今天或昨天是否有记录（作为连续起点）
+  let startDate: string
+  if (diaryDates.includes(today)) {
+    startDate = today
+  } else if (diaryDates.includes(yesterday)) {
+    startDate = yesterday
+  } else {
+    // 今天和昨天都没记录，连续天数为0
+    return 0
+  }
+
+  // 从起点往前数连续天数
+  let streak = 1
+  let checkDate = startDate
+
+  while (true) {
+    const prevDate = addDays(checkDate, -1)
+    if (diaryDates.includes(prevDate)) {
+      streak++
+      checkDate = prevDate
+    } else {
+      break
+    }
+  }
+
+  return streak
+})
 
 onMounted(async () => {
   await diaryStore.fetchDiaries()
