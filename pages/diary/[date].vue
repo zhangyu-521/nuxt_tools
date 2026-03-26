@@ -1,5 +1,5 @@
 <template>
-  <div class="max-w-3xl mx-auto w-full px-4 sm:px-0">
+  <div class="max-w-4xl mx-auto space-y-6">
     <!-- Header -->
     <div class="flex items-center justify-between mb-6">
       <div class="flex items-center gap-3">
