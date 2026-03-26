@@ -2,33 +2,33 @@
   <div class="max-w-4xl mx-auto space-y-6">
     <!-- Header -->
     <div class="flex items-center justify-between mb-6">
-      <div class="flex items-center gap-3">
-        <NuxtLink to="/diary" class="p-2.5 rounded-xl hover:bg-gray-100 dark:hover:bg-slate-700 text-gray-500 transition-all hover:scale-105">
+      <div class="flex items-center gap-2 sm:gap-3 min-w-0">
+        <NuxtLink to="/diary" class="p-2 sm:p-2.5 rounded-xl hover:bg-gray-100 dark:hover:bg-slate-700 text-gray-500 transition-all hover:scale-105 flex-shrink-0">
           <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
           </svg>
         </NuxtLink>
-        <h1 class="text-xl font-bold text-gray-900 dark:text-gray-100">{{ pageTitle }}</h1>
+        <h1 class="text-lg sm:text-xl font-bold text-gray-900 dark:text-gray-100 truncate">{{ pageTitle }}</h1>
       </div>
-      <div class="flex items-center gap-2">
-        <NuxtLink to="/" class="p-2.5 rounded-xl hover:bg-gray-100 dark:hover:bg-slate-700 text-gray-500 transition-all hover:scale-105" title="返回首页">
+      <div class="flex items-center gap-1 sm:gap-2 flex-shrink-0">
+        <NuxtLink to="/" class="p-2 sm:p-2.5 rounded-xl hover:bg-gray-100 dark:hover:bg-slate-700 text-gray-500 transition-all hover:scale-105" title="返回首页">
           <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
           </svg>
         </NuxtLink>
-        <button v-if="diaryId" @click="confirmDelete" class="p-2.5 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-xl transition-all hover:scale-105">
+        <button v-if="diaryId" @click="confirmDelete" class="p-2 sm:p-2.5 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-xl transition-all hover:scale-105">
           <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
           </svg>
         </button>
-        <button @click="save" :disabled="saving" class="btn-primary">
+        <button @click="save" :disabled="saving" class="btn-primary text-sm sm:text-base px-3 sm:px-4">
           {{ saving ? '保存中...' : '保存' }}
         </button>
       </div>
     </div>
 
     <!-- Editor -->
-    <div class="card space-y-6 p-6">
+    <div class="card space-y-6 p-6 overflow-hidden">
       <!-- Date Display -->
       <div class="flex items-center gap-2 text-gray-500 text-sm">
         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -115,7 +115,7 @@
               </svg>
             </button>
           </span>
-          <input v-model="tagInput" type="text" placeholder="添加标签，按回车确认" class="flex-1 bg-transparent border-0 focus:ring-0 text-sm dark:text-gray-100 min-w-[80px]" @keyup.enter="addTag" />
+          <input v-model="tagInput" type="text" placeholder="添加标签，按回车确认" class="flex-1 bg-transparent border-0 focus:ring-0 text-sm dark:text-gray-100 min-w-[60px] w-full" @keyup.enter="addTag" />
         </div>
       </div>
     </div>
