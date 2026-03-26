@@ -105,7 +105,10 @@
         </div>
       </div>
 
-      <!-- Confirm Modal -->
+    </div>
+
+    <!-- Confirm Modal (Teleport to body) -->
+    <Teleport to="body">
       <div v-if="showConfirmModal" class="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50" @click.self="cancelConfirm">
         <div class="card p-6 w-full max-w-sm mx-4">
           <div class="flex items-center gap-3 mb-4">
@@ -128,7 +131,7 @@
           </div>
         </div>
       </div>
-    </div>
+    </Teleport>
 
     <!-- Quick Stats -->
     <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
